@@ -1,0 +1,152 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js" type="text/javascript"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#startDate").val(new Date().toJSON().slice(0, 10));
+
+        /*$('#tblAppointmentDetails').DataTable({
+            "pagingType": "simple" // "simple" option for 'Previous' and 'Next' buttons only
+        });
+        $('.dataTables_length').addClass('bs-select');*/
+
+        $('#selectState')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option>Select a state</option>')
+            ;
+
+        $.ajax({
+            url: 'https://cdn-api.co-vin.in/api/v2/admin/location/states',
+            dataType: "json",
+            method: 'get',
+            success: function (data) {
+                var statesData = '';
+                for (i = 0; i < data.states.length; i++) {
+                    statesData += "<option id='" + data.states[i].state_id + "'>" + data.states[i].state_name + "</option>";
+                }
+                $("#selectState").append(statesData);
+            },
+            error: function (err) {
+                alert(err);
+            }
+        });
+    });
+
+    function LoadDistrictsInState() {
+        var states = document.getElementById("selectState").options;
+        var optionSelectedId = states[states.selectedIndex].id;
+        if (optionSelectedId == '' || optionSelectedId == null) { return; }
+        $('#selectDistrict')
+            .find('option')
+            .remove()
+            .end()
+            .append('<option>Select a district</option>')
+            ;
+
+        $.ajax({
+            url: 'https://cdn-api.co-vin.in/api/v2/admin/location/districts/' + optionSelectedId,
+            dataType: "json",
+            method: 'get',
+            success: function (data) {
+                var districtsData = '';
+                for (i = 0; i < data.districts.length; i++) {
+                    districtsData += "<option id='" + data.districts[i].district_id + "'>" + data.districts[i].district_name + "</option>";
+                }
+                $("#selectDistrict").append(districtsData);
+            },
+            error: function (err) {
+                alert(err);
+            }
+        });
+    }
+
+    function GetFormattedDate(txtStartDate) {
+        if (txtStartDate == null || txtStartDate == '') {
+            var startDate = new Date();
+        }
+        else {
+            var startDate = new Date(txtStartDate);
+        }
+        var month = startDate.getMonth() + 1;
+        var day = startDate.getDate();
+        var year = startDate.getFullYear();
+        return day + "-" + month + "-" + year;
+    }
+
+    function getAppointmentDetails() {
+        var startDate = GetFormattedDate($("#startDate").val());
+        var dists = document.getElementById("selectDistrict").options;
+        var distData = dists[dists.selectedIndex].id;
+        $.ajax({
+            url: 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByDistrict?district_id=' + distData + '&date=' + startDate,
+            dataType: "json",
+            method: 'get',
+            success: function (data) {
+                var appointmentTable = $('#tblAppointmentDetails tbody');
+                appointmentTable.empty();
+
+                var centersdata = data.centers;
+
+                if (centersdata.length == 0) {
+                    appointmentTable.append('<tr><td colspan="5" style="text-align:center;font-weight:bold;">No Vaccinations Available</td></tr>');
+                    return;
+                }
+
+                for (i = 0; i < centersdata.length; i++) {
+                    var innerdata = centersdata[i].sessions;
+                    for (j = 0; j < innerdata.length; j++) {
+                        appointmentTable.append('<tr><td>' + centersdata[i].name + '</td><td>'
+                            + centersdata[i].address + '</td><td>' + innerdata[j].vaccine + '</td><td>' + innerdata[j].available_capacity
+                            + '</td><td>' + innerdata[j].date + '</td></tr>');
+                    }
+                }
+            },
+            error: function (err) {
+                alert(err);
+            }
+        });
+    }
+</script>
+
+<body>
+    <form id="form1" runat="server">
+        <div class="container">
+            <h3 class="text-uppercase text-center">Vaccine Availability In Your District</h3>
+            <h5 class="text-uppercase text-center">To book your appointment, visit COWIN App</h6>
+                <h6 class="text-uppercase text-center">This is only for informational purposes</h6>
+                <div>&nbsp;</div>
+                <div>
+                    <span>Please select the district:</span>
+                    <select id="selectState" onchange="LoadDistrictsInState();"></select>
+                    <select id="selectDistrict">
+                        <option>Select a district</option>
+                    </select>
+                </div>
+                <div>&nbsp;</div>
+                <div>
+                    <span>Please select the date:</span>
+                    <input type="date" id="startDate" />
+                    <input type="button" id="btnSearch" value="Search" onclick="getAppointmentDetails();" />
+                </div>
+
+                <div>&nbsp;</div>
+                <table id="tblAppointmentDetails" class="table table-striped table-bordered table-sm" cellspacing="0"
+                    width="100%">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Center Name</th>
+                            <th>Center Address</th>
+                            <th>Vaccine Name</th>
+                            <th>Available</th>
+                            <th>Date of Availability</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+        </div>
+    </form>
+</body>

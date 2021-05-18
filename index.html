@@ -121,17 +121,18 @@
 
                 var count = 0;
                 for (i = 0; i < centersdata.length; i++) {
+                    
                     var innerdata = centersdata[i].sessions;
                     for (j = 0; j < innerdata.length; j++) {
                         if (innerdata[j].available_capacity != "0") {
                             count++;
                             appointmentTable.append('<tr><td>' + centersdata[i].name + '</td><td>'
                                 + centersdata[i].address + '</td><td>' + innerdata[j].vaccine + '</td><td>' + innerdata[j].available_capacity
-                                + '</td><td>' + innerdata[j].date + '</td></tr>');
+                                + '</td><td>' + innerdata[j].date + '</td><td>' + centersdata[i].pincode + '</td></tr>');
                         }
                     }
                 }
-
+                //http://maps.google.com/maps?q=24.197611,120.780512
                 if (count == 0) {
                     appointmentTable.append('<tr><td colspan="5" style="text-align:center;font-weight:bold;">No Vaccinations Available</td></tr>');
                     return;
@@ -156,7 +157,8 @@
                     <span>Select the search criteria</span>
                     <input type="radio" name="radCriteria" id="rbByDistrict" value="1"
                         onclick="ChangeCriteria(this);">&nbsp;By District
-                    <input type="radio" name="radCriteria" id="rbByPincode" value="2" onclick="ChangeCriteria(this);">&nbsp;By
+                    <input type="radio" name="radCriteria" id="rbByPincode" value="2"
+                        onclick="ChangeCriteria(this);">&nbsp;By
                     Pincode
                 </div>
 
@@ -202,6 +204,7 @@
                             <th>Vaccine Name</th>
                             <th>Available</th>
                             <th>Date of Availability</th>
+                            <th>Pincode</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
